@@ -1,30 +1,29 @@
-from openai import OpenAI
+import speech_recognition as sr
 import os
-from dotenv import load_dotenv
-
-load_dotenv()
 
 def transcribe_audio(audio_file_path):
     """
-    Transcribes audio file to Telugu text using OpenAI Whisper.
+    Transcribes audio file to Telugu text using Google Web Speech API (Free).
     """
-    client = OpenAI() # Assumes OPENAI_API_KEY is in environment or .env
+    recognizer = sr.Recognizer()
     
     if not os.path.exists(audio_file_path):
         return "Error: Audio file not found."
 
     try:
-        with open(audio_file_path, "rb") as audio_file:
-            transcription = client.audio.transcriptions.create(
-                model="whisper-1", 
-                file=audio_file,
-                language="te"  # Explicitly set to Telugu
-            )
-        return transcription.text
+        with sr.AudioFile(audio_file_path) as source:
+            audio_data = recognizer.record(source)
+            # Use Google Web Speech API (no key required for limited use)
+            text = recognizer.recognize_google(audio_data, language="te-IN")
+            return text
+    except sr.UnknownValueError:
+        return "Error: Could not understand audio."
+    except sr.RequestError as e:
+        return f"Error: Could not request results from Google Speech Recognition service; {e}"
     except Exception as e:
         return f"Transcription error: {str(e)}"
 
 if __name__ == "__main__":
-    # Test (requires an actual file and API key)
+    # Test
     # print(transcribe_audio("audio/input/test.wav"))
     pass

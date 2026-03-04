@@ -1,32 +1,32 @@
-from openai import OpenAI
+import google.generativeai as genai
+import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
 def generate_response(user_text):
     """
-    Generates a Telugu response using GPT-4o.
+    Generates a Telugu response using Google Gemini 1.5 Flash (Free Tier).
     """
-    client = OpenAI()
-    
-    system_prompt = (
-        "You are a helpful assistant that speaks Telugu. "
-        "Always respond in clear, natural Telugu. Keep responses concise."
-    )
-    
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        return "Error: Gemini API key not found."
+
     try:
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_text}
-            ]
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        
+        system_prompt = (
+            "You are a helpful assistant that speaks Telugu. "
+            "Always respond in clear, natural Telugu. Keep responses concise."
         )
-        return response.choices[0].message.content
+        
+        response = model.generate_content(f"{system_prompt}\n\nUser: {user_text}")
+        return response.text.strip()
     except Exception as e:
-        return f"LLM error: {str(e)}"
+        return f"Gemini error: {str(e)}"
 
 if __name__ == "__main__":
-    # Test (requires API key)
+    # Test
     # print(generate_response("తెలంగాణ రాజధాని ఏది?"))
     pass

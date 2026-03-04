@@ -1,4 +1,6 @@
-openai
+google-generativeai
+SpeechRecognition
+edge-tts
 sounddevice
 numpy
 scipy

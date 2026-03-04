@@ -14,9 +14,9 @@ from playback import play_audio
 def main():
     load_dotenv()
     
-    if not os.getenv("OPENAI_API_KEY"):
-        print("Error: OPENAI_API_KEY not found in .env file.")
-        print("Please copy .env.example to .env and add your API key.")
+    if not os.getenv("GEMINI_API_KEY"):
+        print("Error: GEMINI_API_KEY not found in .env file.")
+        print("Please add your Google AI API key to .env.")
         return
 
     # Paths
