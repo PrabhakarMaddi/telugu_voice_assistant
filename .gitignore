@@ -1,0 +1,12 @@
+.env
+audio/input/*.wav
+audio/output/*.mp3
+__pycache__/
+*.pyc
+.vscode/
+.idea/
+vendor/
+node_modules/
+dist/
+build/
+.DS_Store
