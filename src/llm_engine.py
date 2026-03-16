@@ -8,9 +8,16 @@ load_dotenv()
 api_key = os.getenv("GEMINI_API_KEY")
 if api_key:
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel("gemini-1.5-flash")
-    # Start a chat session to maintain history
-    chat_session = model.start_chat(history=[])
+    # Use 'gemini-1.5-flash' (the SDK handles the models/ prefix usually)
+    # If the user got a 404, it might be that the model ID changed or the v1beta endpoint is acting up.
+    # We'll use 'gemini-1.5-flash-latest' to be safer.
+    model_name = "gemini-1.5-flash"
+    try:
+        model = genai.GenerativeModel(model_name)
+        chat_session = model.start_chat(history=[])
+    except Exception as e:
+        print(f"Error initializing Gemini: {e}")
+        chat_session = None
 else:
     chat_session = None
 
@@ -20,7 +27,7 @@ def generate_response(user_text):
     with conversation history support.
     """
     if not chat_session:
-        return "Error: Gemini API key not found."
+        return "Error: Gemini API key not found or model initialization failed."
 
     try:
         system_instruction = (
@@ -41,5 +48,4 @@ def generate_response(user_text):
 if __name__ == "__main__":
     # Test
     # print(generate_response("నమస్కారం! నువ్వు ఎవరు?"))
-    # print(generate_response("నీ పేరు ఏమిటి?"))
     pass

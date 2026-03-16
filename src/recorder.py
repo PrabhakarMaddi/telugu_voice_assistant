@@ -7,16 +7,14 @@ import time
 def record_audio(filename, max_duration=10, silence_threshold=0.01, silence_duration=1.5, fs=44100):
     """
     Records audio until silence is detected or max_duration is reached.
+    Saves as 16-bit PCM WAV for compatibility.
     """
     print(f"Recording... (Will stop after {silence_duration}s of silence or {max_duration}s total)")
     
     # Ensure directory exists
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     
-    # Parameters for silence detection
-    chunk_size = int(0.1 * fs)  # 100ms chunks
     recording = []
-    
     silent_chunks = 0
     max_silent_chunks = int(silence_duration / 0.1)
     
@@ -46,11 +44,15 @@ def record_audio(filename, max_duration=10, silence_threshold=0.01, silence_dura
     # Concatenate all chunks
     audio_data = np.concatenate(recording, axis=0)
     
+    # Convert to 16-bit PCM (CRITICAL for SpeechRecognition)
+    # The audio from sounddevice info is typically float32 in range [-1, 1]
+    audio_int16 = (audio_data * 32767).astype(np.int16)
+    
     # Save as WAV file
-    wav.write(filename, fs, audio_data)
+    wav.write(filename, fs, audio_int16)
     print(f"Recording saved to {filename}")
 
 if __name__ == "__main__":
     # Test recording
-    test_file = os.path.join("audio", "input", "test.wav")
+    test_file = os.path.join("audio", "input", "test_pcm.wav")
     record_audio(test_file)
