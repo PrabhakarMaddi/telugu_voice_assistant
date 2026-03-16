@@ -3,11 +3,11 @@
 A conversational AI assistant that understands Telugu speech and responds in Telugu.
 
 ## Features
-- **Voice Input**: Captures audio from the microphone.
-- **Speech-to-Text**: High-accuracy transcription using OpenAI Whisper.
-- **AI Understanding**: Natural language processing via GPT-4o.
-- **Text-to-Speech**: Natural sounding Telugu voices using OpenAI TTS.
-- **Audio Playback**: Automatic playback of generated responses.
+- **Voice Input**: Captures audio from the microphone with silence detection.
+- **Speech-to-Text**: Transcription using Google Web Speech API.
+- **AI Understanding**: Natural language processing via Google Gemini 1.5 Flash.
+- **Text-to-Speech**: Natural sounding Telugu voices using Microsoft Edge TTS.
+- **Audio Playback**: Automatic playback of generated responses using Pygame.
 
 ## Setup
 
@@ -24,7 +24,7 @@ A conversational AI assistant that understands Telugu speech and responds in Tel
 
 3. **Configure Environment Variables**:
    - Copy `.env.example` to `.env`.
-   - Add your `OPENAI_API_KEY`.
+   - Add your `GEMINI_API_KEY`.
 
 4. **Run the Assistant**:
    ```bash
@@ -38,7 +38,7 @@ A conversational AI assistant that understands Telugu speech and responds in Tel
 - `requirements.txt`: Python dependencies.
 
 ## Technical Details
-- **STT**: OpenAI Whisper (`whisper-1`)
-- **LLM**: OpenAI GPT-4o
-- **TTS**: OpenAI TTS (`tts-1`)
+- **STT**: Google Web Speech API (via `SpeechRecognition`)
+- **LLM**: Google Gemini 1.5 Flash
+- **TTS**: Microsoft Edge TTS (`edge-tts`)
 - **Playback**: Pygame

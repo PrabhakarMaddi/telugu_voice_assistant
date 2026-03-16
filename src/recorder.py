@@ -4,20 +4,50 @@ import scipy.io.wavfile as wav
 import os
 import time
 
-def record_audio(filename, duration=5, fs=44100):
+def record_audio(filename, max_duration=10, silence_threshold=0.01, silence_duration=1.5, fs=44100):
     """
-    Simple audio recorder. 
-    Eventually we can add silence detection.
+    Records audio until silence is detected or max_duration is reached.
     """
-    print(f"Recording for {duration} seconds...")
-    recording = sd.rec(int(duration * fs), samplerate=fs, channels=1)
-    sd.wait()  # Wait until recording is finished
+    print(f"Recording... (Will stop after {silence_duration}s of silence or {max_duration}s total)")
     
     # Ensure directory exists
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     
+    # Parameters for silence detection
+    chunk_size = int(0.1 * fs)  # 100ms chunks
+    recording = []
+    
+    silent_chunks = 0
+    max_silent_chunks = int(silence_duration / 0.1)
+    
+    def callback(indata, frames, time, status):
+        # Calculate volume
+        volume_norm = np.linalg.norm(indata) / np.sqrt(len(indata))
+        recording.append(indata.copy())
+        
+        nonlocal silent_chunks
+        if volume_norm < silence_threshold:
+            silent_chunks += 1
+        else:
+            silent_chunks = 0
+
+    with sd.InputStream(samplerate=fs, channels=1, callback=callback):
+        start_time = time.time()
+        while True:
+            elapsed_time = time.time() - start_time
+            if silent_chunks > max_silent_chunks:
+                print("Silence detected, stopping...")
+                break
+            if elapsed_time > max_duration:
+                print("Max duration reached, stopping...")
+                break
+            time.sleep(0.1)
+            
+    # Concatenate all chunks
+    audio_data = np.concatenate(recording, axis=0)
+    
     # Save as WAV file
-    wav.write(filename, fs, recording)
+    wav.write(filename, fs, audio_data)
     print(f"Recording saved to {filename}")
 
 if __name__ == "__main__":
