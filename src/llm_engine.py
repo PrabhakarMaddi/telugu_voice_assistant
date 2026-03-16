@@ -1,16 +1,27 @@
-from google import genai
 import os
+import warnings
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# Initialize Gemini Client
+# Robustly suppress the deprecation warning from the old SDK
+warnings.filterwarnings("ignore", category=FutureWarning)
+
+try:
+    import google.generativeai as genai
+except ImportError:
+    genai = None
+
+# Initialize Gemini
 api_key = os.getenv("GEMINI_API_KEY")
-if api_key:
+if api_key and genai:
     try:
-        client = genai.Client(api_key=api_key)
-        # Create a chat session
-        chat_session = client.chats.create(model="gemini-1.5-flash")
+        genai.configure(api_key=api_key)
+        # Use a model that exists in the current environment
+        # Based on list_models, gemini-flash-latest is available
+        model = genai.GenerativeModel("gemini-flash-latest")
+        # Start a chat session to maintain history
+        chat_session = model.start_chat(history=[])
     except Exception as e:
         print(f"Error initializing Gemini: {e}")
         chat_session = None
@@ -19,11 +30,11 @@ else:
 
 def generate_response(user_text):
     """
-    Generates a Telugu response using Google Gemini 1.5 Flash (Free Tier)
-    with conversation history support using the new google-genai SDK.
+    Generates a Telugu response using Google Gemini (Free Tier)
+    with conversation history support using the google-generativeai SDK.
     """
     if not chat_session:
-        return "Error: Gemini API key not found or client initialization failed."
+        return "Error: Gemini API key not found or initialization failed."
 
     try:
         system_instruction = (
@@ -32,19 +43,11 @@ def generate_response(user_text):
             "If the user asks who you are, say you are a Telugu Voice Assistant."
         )
         
-        # In the new SDK, we can't easily prepend the first message to a chat object
-        # but we can set config or just ensure the context is clear.
-        # For simplicity, if history is empty, we'll prefix.
-        
-        prompt = user_text
-        # Access history via chat_session.list_messages() or check internal state
-        # For this SDK, the history is maintained by the chat object.
-        
-        # If it's the first message, add system context
-        if not chat_session._curated_history: # Internal hint or just use a flag
-             prompt = f"{system_instruction}\n\nUser: {user_text}"
+        full_prompt = user_text
+        if len(chat_session.history) == 0:
+            full_prompt = f"{system_instruction}\n\nUser: {user_text}"
 
-        response = chat_session.send_message(prompt)
+        response = chat_session.send_message(full_prompt)
         return response.text.strip()
     except Exception as e:
         return f"Gemini error: {str(e)}"

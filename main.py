@@ -25,6 +25,7 @@ def main():
     output_dir = os.path.join(base_dir, "audio", "output")
     os.makedirs(input_dir, exist_ok=True)
     os.makedirs(output_dir, exist_ok=True)
+    
 
     input_audio = os.path.join(input_dir, "user_query.wav")
     output_audio = os.path.join(output_dir, "assistant_response.mp3")
