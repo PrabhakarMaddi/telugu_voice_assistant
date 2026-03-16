@@ -4,7 +4,7 @@ import sys
 def check_dependencies():
     required = [
         "sounddevice", "numpy", "scipy", "edge_tts", 
-        "google.generativeai", "speech_recognition", 
+        "google.genai", "speech_recognition", 
         "pygame", "dotenv"
     ]
     
