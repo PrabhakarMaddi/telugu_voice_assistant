@@ -30,6 +30,7 @@ class Conversation(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     user_text = Column(String)
     assistant_text = Column(String)
+    audio_url = Column(String, nullable=True)  # New column
     timestamp = Column(DateTime, default=datetime.datetime.utcnow)
 
     owner = relationship("User", back_populates="conversations")
@@ -43,3 +44,12 @@ def get_db():
 
 def init_db():
     Base.metadata.create_all(bind=engine)
+    # Simple migration for existing DB
+    from sqlalchemy import inspect
+    inspector = inspect(engine)
+    columns = [c['name'] for c in inspector.get_columns('conversations')]
+    if 'audio_url' not in columns:
+        with engine.connect() as conn:
+            from sqlalchemy import text
+            conn.execute(text("ALTER TABLE conversations ADD COLUMN audio_url VARCHAR"))
+            conn.commit()

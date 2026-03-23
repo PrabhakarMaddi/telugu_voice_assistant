@@ -116,6 +116,20 @@ function Dashboard({ token, setToken }) {
     });
   };
 
+  const loadHistoryItem = (h) => {
+    setMessages([
+      { role: 'user', text: h.user_text },
+      { role: 'assistant', text: h.assistant_text, audio: h.audio_url ? `${API_URL}${h.audio_url}` : null }
+    ]);
+    if (h.audio_url) playAudio(`${API_URL}${h.audio_url}`);
+    setShowHistory(false);
+  };
+
+  const startNewChat = () => {
+    setMessages([]);
+    stopAudio();
+  };
+
   return (
     <div className="flex flex-col h-screen max-w-4xl mx-auto">
       {/* Header */}
@@ -131,6 +145,14 @@ function Dashboard({ token, setToken }) {
         </div>
 
         <div className="flex items-center gap-2">
+          {messages.length > 0 && (
+            <button
+              onClick={startNewChat}
+              className="px-3 py-1.5 text-xs font-semibold text-aqua-600 hover:bg-aqua-50 rounded-lg transition-colors border border-aqua-100 mr-2"
+            >
+              + New Chat
+            </button>
+          )}
           <button
             onClick={() => setShowHistory(!showHistory)}
             className={`p-2 rounded-xl transition-all ${
@@ -304,13 +326,20 @@ function Dashboard({ token, setToken }) {
                   <p className="text-center text-gray-300 text-sm mt-10">No recent conversations.</p>
                 )}
                 {history.map((h, i) => (
-                  <div key={i} className="bg-aqua-50 border border-aqua-100 p-3 rounded-2xl">
-                    <p className="text-[10px] text-aqua-400 font-medium mb-1">
-                      {new Date(h.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                    </p>
+                  <button
+                    key={i}
+                    onClick={() => loadHistoryItem(h)}
+                    className="w-full text-left bg-aqua-50 hover:bg-aqua-100 border border-aqua-100 p-3 rounded-2xl transition-all active:scale-[0.98] group"
+                  >
+                    <div className="flex justify-between items-start mb-1">
+                      <p className="text-[10px] text-aqua-400 font-medium">
+                        {new Date(h.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                      {h.audio_url && <Volume2 className="w-3 h-3 text-aqua-300 group-hover:text-aqua-500" />}
+                    </div>
                     <p className="text-sm font-semibold text-aqua-800 truncate telugu-font">{formatText(h.user_text)}</p>
                     <p className="text-xs text-gray-400 line-clamp-2 telugu-font mt-0.5">{formatText(h.assistant_text)}</p>
-                  </div>
+                  </button>
                 ))}
               </div>
             </motion.div>

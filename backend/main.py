@@ -104,25 +104,27 @@ async def chat(payload: ChatPayload, current_user: str = Depends(get_current_use
     
     assistant_text = generate_response(payload.text, history=gemini_history)
     
-    conversation = Conversation(
-        user_id=user.id,
-        user_text=payload.text,
-        assistant_text=assistant_text
-    )
-    db.add(conversation)
-    db.commit()
-    
     output_filename = f"resp_{user.username}_{int(datetime.now(timezone.utc).timestamp())}.mp3"
     # Use absolute path for output to ensure it saves in the project root's audio folder
     output_path = os.path.join(parent_dir, "audio", "output", output_filename)
+    audio_url = f"/audio/{output_filename}"
     
     # Properly await the async TTS function
     await text_to_speech(assistant_text, output_path, voice=user.preferred_voice)
     
+    conversation = Conversation(
+        user_id=user.id,
+        user_text=payload.text,
+        assistant_text=assistant_text,
+        audio_url=audio_url  
+    )
+    db.add(conversation)
+    db.commit()
+    
     return {
         "user_text": payload.text,
         "assistant_text": assistant_text,
-        "audio_url": f"/audio/{output_filename}"
+        "audio_url": audio_url
     }
 
 @app.get("/history", response_model=List[ConversationResponse])
