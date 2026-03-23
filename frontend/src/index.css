@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+@theme {
+  --color-aqua-50: #edfcfa;
+  --color-aqua-100: #d0f8f3;
+  --color-aqua-200: #a5f0e8;
+  --color-aqua-300: #6de3d9;
+  --color-aqua-400: #2dccc4;
+  --color-aqua-500: #14b0aa;
+  --color-aqua-600: #0e8e89;
+  --color-aqua-700: #0d716d;
+  --color-aqua-800: #0e5a57;
+  --color-aqua-900: #104b48;
+
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+:root {
+  font-family: 'Inter', system-ui, sans-serif;
+  line-height: 1.5;
+  background-color: #f8fffd;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background: linear-gradient(135deg, #edfcfa 0%, #f8fffd 50%, #d0f8f3 100%);
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(20, 176, 170, 0.15);
+}
+
+.telugu-font {
+  font-family: 'Gidugu', 'Ramabhadra', 'Inter', sans-serif;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #a5f0e8; border-radius: 99px; }

@@ -14,26 +14,21 @@ except ImportError:
 
 # Initialize Gemini
 api_key = os.getenv("GEMINI_API_KEY")
+model = None
 if api_key and genai:
     try:
         genai.configure(api_key=api_key)
-        # Use a model that exists in the current environment
-        # Based on list_models, gemini-flash-latest is available
         model = genai.GenerativeModel("gemini-flash-latest")
-        # Start a chat session to maintain history
-        chat_session = model.start_chat(history=[])
     except Exception as e:
         print(f"Error initializing Gemini: {e}")
-        chat_session = None
-else:
-    chat_session = None
 
-def generate_response(user_text):
+def generate_response(user_text, history=None):
     """
     Generates a Telugu response using Google Gemini (Free Tier)
-    with conversation history support using the google-generativeai SDK.
+    with conversation history support.
+    'history' should be a list of dicts: [{'role': 'user', 'parts': [...]}, ...]
     """
-    if not chat_session:
+    if not model:
         return "Error: Gemini API key not found or initialization failed."
 
     try:
@@ -43,11 +38,16 @@ def generate_response(user_text):
             "If the user asks who you are, say you are a Telugu Voice Assistant."
         )
         
-        full_prompt = user_text
-        if len(chat_session.history) == 0:
-            full_prompt = f"{system_instruction}\n\nUser: {user_text}"
-
-        response = chat_session.send_message(full_prompt)
+        # Start a new chat session with the provided history
+        # Gemini expects history format: [{'role': 'user', 'parts': ['...']}, ...]
+        chat = model.start_chat(history=history or [])
+        
+        # If history is empty, prepend system instruction to first message
+        full_user_text = user_text
+        if not history:
+            full_user_text = f"{system_instruction}\n\nUser: {user_text}"
+            
+        response = chat.send_message(full_user_text)
         return response.text.strip()
     except Exception as e:
         return f"Gemini error: {str(e)}"
