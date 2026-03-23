@@ -24,7 +24,7 @@
 :root {
   font-family: 'Inter', system-ui, sans-serif;
   line-height: 1.5;
-  background-color: #f8fffd;
+  background-color: #ffffff;
 }
 
 body {
@@ -32,7 +32,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
   overflow-x: hidden;
-  background: linear-gradient(135deg, #edfcfa 0%, #f8fffd 50%, #d0f8f3 100%);
+  background: #ffffff;
 }
 
 #root {
@@ -41,10 +41,10 @@ body {
 }
 
 .glass {
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(20, 176, 170, 0.15);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .telugu-font {

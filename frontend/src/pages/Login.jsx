@@ -29,11 +29,7 @@ function Login({ setToken }) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 relative overflow-hidden">
-      {/* Decorative blobs */}
-      <div className="absolute top-[-80px] right-[-80px] w-[360px] h-[360px] bg-aqua-200/50 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-[-80px] left-[-80px] w-[360px] h-[360px] bg-aqua-100/60 rounded-full blur-3xl pointer-events-none" />
-
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 relative overflow-hidden bg-white">
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
