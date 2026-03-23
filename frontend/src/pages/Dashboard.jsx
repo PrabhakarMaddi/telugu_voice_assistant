@@ -16,12 +16,32 @@ function Dashboard({ token, setToken }) {
   const [username, setUsername] = useState('');
   const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState([]);
+  const [isPlaying, setIsPlaying] = useState(false);
   const scrollRef = useRef(null);
+  const audioRef = useRef(null);
 
   useEffect(() => { fetchProfile(); fetchHistory(); }, []);
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages]);
+
+  const stopAudio = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      setIsPlaying(false);
+    }
+  };
+
+  const playAudio = (url) => {
+    stopAudio();
+    const audio = new Audio(url);
+    audioRef.current = audio;
+    audio.onplay = () => setIsPlaying(true);
+    audio.onended = () => setIsPlaying(false);
+    audio.onpause = () => setIsPlaying(false);
+    audio.play().catch(e => console.error('Audio play failed', e));
+  };
 
   const fetchProfile = async () => {
     try {
@@ -76,7 +96,7 @@ function Dashboard({ token, setToken }) {
         audio: `${API_URL}${res.data.audio_url}`
       };
       setMessages(prev => [...prev, assistantMsg]);
-      new Audio(assistantMsg.audio).play();
+      playAudio(assistantMsg.audio);
       fetchHistory();
     } catch {
       setMessages(prev => [...prev, { role: 'assistant', text: 'నమస్కారం, ఏదో పొరపాటు జరిగింది. మళ్ళీ ప్రయత్నించండి.' }]);
@@ -162,7 +182,7 @@ function Dashboard({ token, setToken }) {
                     <p className="text-sm leading-relaxed telugu-font">{formatText(msg.text)}</p>
                     {msg.audio && (
                       <button
-                        onClick={() => new Audio(msg.audio).play()}
+                        onClick={() => playAudio(msg.audio)}
                         className="mt-1.5 text-xs flex items-center gap-1 opacity-50 hover:opacity-100 transition-opacity"
                       >
                         <Volume2 className="w-3 h-3" /> Replay
@@ -208,31 +228,48 @@ function Dashboard({ token, setToken }) {
 
             <div className="flex items-center gap-3">
               {/* Mic button */}
-              <button
-                onClick={startConversation}
-                className={`flex-none p-4 rounded-2xl transition-all active:scale-95 shadow-md ${
-                  isListening
-                    ? 'bg-red-500 text-white shadow-red-200/60 animate-pulse'
-                    : 'bg-aqua-500 hover:bg-aqua-600 text-white shadow-aqua-200/60'
-                }`}
-                title="Start Conversation"
-              >
-                {isListening ? <Square className="w-6 h-6 fill-current" /> : <Mic className="w-6 h-6" />}
-              </button>
+              <div className="relative">
+                <button
+                  onClick={startConversation}
+                  className={`flex-none p-4 rounded-2xl transition-all active:scale-95 shadow-md ${
+                    isListening
+                      ? 'bg-red-500 text-white shadow-red-200/60 animate-pulse'
+                      : 'bg-aqua-500 hover:bg-aqua-600 text-white shadow-aqua-200/60'
+                  }`}
+                  title="Start Conversation"
+                  disabled={isPlaying}
+                >
+                  {isListening ? <Square className="w-6 h-6 fill-current" /> : <Mic className="w-6 h-6" />}
+                </button>
+                
+                {isPlaying && (
+                  <motion.button
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    onClick={stopAudio}
+                    className="absolute -top-2 -right-2 p-2 bg-white border border-red-100 text-red-500 rounded-full shadow-lg hover:bg-red-50 transition-colors z-20"
+                    title="Stop Speaking"
+                  >
+                    <Square className="w-3 h-3 fill-current" />
+                  </motion.button>
+                )}
+              </div>
 
               {/* Text input */}
               <div className="flex-1 relative flex items-center">
                 <input
                   type="text"
-                  placeholder="Type in Telugu or English..."
+                  placeholder={isPlaying ? "Assistant is speaking..." : "Type in Telugu or English..."}
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && sendMessage(inputText)}
-                  className="w-full bg-white border border-aqua-200 rounded-2xl pl-4 pr-12 py-3.5 text-gray-700 placeholder:text-gray-300 outline-none focus:border-aqua-500 focus:ring-2 focus:ring-aqua-100 transition-all"
+                  disabled={isPlaying}
+                  className="w-full bg-white border border-aqua-200 rounded-2xl pl-4 pr-12 py-3.5 text-gray-700 placeholder:text-gray-300 outline-none focus:border-aqua-500 focus:ring-2 focus:ring-aqua-100 transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
                 />
                 <button
                   onClick={() => sendMessage(inputText)}
-                  className="absolute right-3 text-aqua-400 hover:text-aqua-600 transition-colors"
+                  disabled={isPlaying || !inputText.trim()}
+                  className="absolute right-3 text-aqua-400 hover:text-aqua-600 transition-colors disabled:opacity-30"
                 >
                   <Send className="w-5 h-5" />
                 </button>
