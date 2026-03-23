@@ -85,6 +85,17 @@ function Dashboard({ token, setToken }) {
     }
   };
 
+  const formatText = (text) => {
+    if (!text) return null;
+    const parts = text.split(/(\*\*.*?\*\*)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return <strong key={i} className="font-bold">{part.slice(2, -2)}</strong>;
+      }
+      return part;
+    });
+  };
+
   return (
     <div className="flex flex-col h-screen max-w-4xl mx-auto">
       {/* Header */}
@@ -148,7 +159,7 @@ function Dashboard({ token, setToken }) {
                       ? 'bg-aqua-500 text-white rounded-tr-sm shadow-aqua-200/60'
                       : 'bg-white text-gray-700 rounded-tl-sm border border-aqua-100'
                   }`}>
-                    <p className="text-sm leading-relaxed telugu-font">{msg.text}</p>
+                    <p className="text-sm leading-relaxed telugu-font">{formatText(msg.text)}</p>
                     {msg.audio && (
                       <button
                         onClick={() => new Audio(msg.audio).play()}
@@ -260,8 +271,8 @@ function Dashboard({ token, setToken }) {
                     <p className="text-[10px] text-aqua-400 font-medium mb-1">
                       {new Date(h.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </p>
-                    <p className="text-sm font-semibold text-aqua-800 truncate telugu-font">{h.user_text}</p>
-                    <p className="text-xs text-gray-400 line-clamp-2 telugu-font mt-0.5">{h.assistant_text}</p>
+                    <p className="text-sm font-semibold text-aqua-800 truncate telugu-font">{formatText(h.user_text)}</p>
+                    <p className="text-xs text-gray-400 line-clamp-2 telugu-font mt-0.5">{formatText(h.assistant_text)}</p>
                   </div>
                 ))}
               </div>

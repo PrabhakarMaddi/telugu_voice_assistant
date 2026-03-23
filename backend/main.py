@@ -1,10 +1,13 @@
 import sys
 import os
-from fastapi import FastAPI, Depends, HTTPException, status, UploadFile, File
+from contextlib import asynccontextmanager
+from typing import List, Optional
+from pydantic import BaseModel, ConfigDict
+from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
-from datetime import datetime, timedelta
-import shutil
+from datetime import datetime, timedelta, timezone
 
 # Add current and src to path
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -16,11 +19,35 @@ from database import engine, get_db, init_db, User, Conversation
 from auth import get_current_user, create_access_token, verify_password, get_password_hash
 from llm_engine import generate_response
 from text_to_speech import text_to_speech
-from stt_engine import transcribe_audio
 
-app = FastAPI()
+# Pydantic Models
+class UserCreate(BaseModel):
+    username: str
+    password: str
 
-# CORS for frontend
+class VoiceUpdate(BaseModel):
+    voice: str
+
+class ChatPayload(BaseModel):
+    text: str
+
+class ConversationResponse(BaseModel):
+    id: int
+    user_text: str
+    assistant_text: str
+    timestamp: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    os.makedirs(os.path.join(parent_dir, "audio", "input"), exist_ok=True)
+    os.makedirs(os.path.join(parent_dir, "audio", "output"), exist_ok=True)
+    yield
+
+app = FastAPI(lifespan=lifespan)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -29,95 +56,94 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.on_event("startup")
-def startup_event():
-    init_db()
-    # Ensure audio directories exist
-    os.makedirs("audio/input", exist_ok=True)
-    os.makedirs("audio/output", exist_ok=True)
-
 @app.post("/register")
-def register(user: dict, db: Session = Depends(get_db)):
-    db_user = db.query(User).filter(User.username == user["username"]).first()
+async def register(user: UserCreate, db: Session = Depends(get_db)):
+    db_user = db.query(User).filter(User.username == user.username).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Username already registered")
     
-    hashed_password = get_password_hash(user["password"])
-    new_user = User(username=user["username"], hashed_password=hashed_password)
+    hashed_password = get_password_hash(user.password)
+    new_user = User(username=user.username, hashed_password=hashed_password)
     db.add(new_user)
     db.commit()
     return {"message": "User created successfully"}
 
 @app.post("/token")
-def login(form_data: dict, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.username == form_data["username"]).first()
-    if not user or not verify_password(form_data["password"], user.hashed_password):
+async def login(user_data: UserCreate, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.username == user_data.username).first()
+    if not user or not verify_password(user_data.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Incorrect username or password")
     
     access_token = create_access_token(data={"sub": user.username})
     return {"access_token": access_token, "token_type": "bearer"}
 
 @app.get("/me")
-def read_users_me(current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
+async def read_users_me(current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.username == current_user).first()
     return {"username": user.username, "preferred_voice": user.preferred_voice}
 
 @app.post("/settings/voice")
-def update_voice(voice_data: dict, current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
+async def update_voice(voice_data: VoiceUpdate, current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.username == current_user).first()
-    user.preferred_voice = voice_data["voice"]
+    user.preferred_voice = voice_data.voice
     db.commit()
     return {"message": "Voice updated"}
 
 @app.post("/chat")
-async def chat(payload: dict, current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
-    user_text = payload.get("text")
+async def chat(payload: ChatPayload, current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.username == current_user).first()
     
-    # Fetch recent history for context (last 5 exchanges)
     recent_db_history = db.query(Conversation).filter(
         Conversation.user_id == user.id
     ).order_by(Conversation.timestamp.desc()).limit(5).all()
     
-    # Format history for Gemini: [{'role': 'user', 'parts': ['...']}, {'role': 'model', 'parts': ['...']}]
-    # We reverse it to be in chronological order
     gemini_history = []
     for conv in reversed(recent_db_history):
         gemini_history.append({"role": "user", "parts": [conv.user_text]})
         gemini_history.append({"role": "model", "parts": [conv.assistant_text]})
     
-    # 1. Generate LLM response
-    assistant_text = generate_response(user_text, history=gemini_history)
+    assistant_text = generate_response(payload.text, history=gemini_history)
     
-    # 2. Save to history
     conversation = Conversation(
         user_id=user.id,
-        user_text=user_text,
+        user_text=payload.text,
         assistant_text=assistant_text
     )
     db.add(conversation)
     db.commit()
     
-    # 3. Generate Audio
-    output_audio = f"audio/output/resp_{user.username}_{datetime.now().timestamp()}.mp3"
-    text_to_speech(assistant_text, output_audio, voice=user.preferred_voice)
+    output_filename = f"resp_{user.username}_{int(datetime.now(timezone.utc).timestamp())}.mp3"
+    # Use absolute path for output to ensure it saves in the project root's audio folder
+    output_path = os.path.join(parent_dir, "audio", "output", output_filename)
+    
+    # Properly await the async TTS function
+    await text_to_speech(assistant_text, output_path, voice=user.preferred_voice)
     
     return {
-        "user_text": user_text,
+        "user_text": payload.text,
         "assistant_text": assistant_text,
-        "audio_url": f"/audio/{os.path.basename(output_audio)}"
+        "audio_url": f"/audio/{output_filename}"
     }
 
-@app.get("/history")
-def get_history(current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
+@app.get("/history", response_model=List[ConversationResponse])
+async def get_history(current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.username == current_user).first()
     
-    # Task: Store only last 10 days
-    ten_days_ago = datetime.utcnow() - timedelta(days=10)
-    
-    # Cleanup old conversations
+    ten_days_ago = datetime.now(timezone.utc) - timedelta(days=10)
     db.query(Conversation).filter(Conversation.timestamp < ten_days_ago).delete()
     db.commit()
+    
+    # Cleanup old audio files on disk
+    try:
+        audio_dir = os.path.join(parent_dir, "audio", "output")
+        if os.path.exists(audio_dir):
+            for f in os.listdir(audio_dir):
+                if f.endswith(".mp3"):
+                    file_path = os.path.join(audio_dir, f)
+                    if os.path.getmtime(file_path) < ten_days_ago.timestamp():
+                        os.remove(file_path)
+    except Exception as e:
+        print(f"Disk cleanup error: {e}")
     
     history = db.query(Conversation).filter(
         Conversation.user_id == user.id,
@@ -126,9 +152,10 @@ def get_history(current_user: str = Depends(get_current_user), db: Session = Dep
     
     return history
 
-# To serve audio files
-from fastapi.staticfiles import StaticFiles
-app.mount("/audio", StaticFiles(directory="audio/output"), name="audio")
+# Use absolute path for mounting static files
+audio_output_dir = os.path.join(parent_dir, "audio", "output")
+os.makedirs(audio_output_dir, exist_ok=True)
+app.mount("/audio", StaticFiles(directory=audio_output_dir), name="audio")
 
 if __name__ == "__main__":
     import uvicorn
