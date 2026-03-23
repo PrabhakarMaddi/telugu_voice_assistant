@@ -35,9 +35,13 @@ class ConversationResponse(BaseModel):
     id: int
     user_text: str
     assistant_text: str
+    audio_url: Optional[str] = None
     timestamp: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+class ReplayPayload(BaseModel):
+    text: str
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -55,6 +59,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/health")
+async def health_check():
+    return {"status": "ok", "version": "1.1", "features": ["history_replay"]}
 
 @app.post("/register")
 async def register(user: UserCreate, db: Session = Depends(get_db)):
@@ -116,7 +124,8 @@ async def chat(payload: ChatPayload, current_user: str = Depends(get_current_use
         user_id=user.id,
         user_text=payload.text,
         assistant_text=assistant_text,
-        audio_url=audio_url  
+        audio_url=audio_url,
+        timestamp=datetime.now(timezone.utc)
     )
     db.add(conversation)
     db.commit()
@@ -153,6 +162,14 @@ async def get_history(current_user: str = Depends(get_current_user), db: Session
     ).order_by(Conversation.timestamp.desc()).all()
     
     return history
+
+@app.post("/chat/replay")
+async def replay_audio(payload: ReplayPayload, current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.username == current_user).first()
+    output_filename = f"replay_{user.username}_{int(datetime.now(timezone.utc).timestamp())}.mp3"
+    output_path = os.path.join(parent_dir, "audio", "output", output_filename)
+    await text_to_speech(payload.text, output_path, voice=user.preferred_voice)
+    return {"audio_url": f"/audio/{output_filename}"}
 
 # Use absolute path for mounting static files
 audio_output_dir = os.path.join(parent_dir, "audio", "output")

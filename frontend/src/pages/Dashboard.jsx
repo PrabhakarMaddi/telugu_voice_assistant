@@ -122,7 +122,24 @@ function Dashboard({ token, setToken }) {
       { role: 'assistant', text: h.assistant_text, audio: h.audio_url ? `${API_URL}${h.audio_url}` : null }
     ]);
     if (h.audio_url) playAudio(`${API_URL}${h.audio_url}`);
+    else handleHistoryReplay(h);
     setShowHistory(false);
+  };
+
+  const handleHistoryReplay = async (h) => {
+    try {
+      setLoading(true);
+      const res = await axios.post(`${API_URL}/chat/replay`, { text: h.assistant_text }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const audioUrl = `${API_URL}${res.data.audio_url}`;
+      playAudio(audioUrl);
+      setHistory(prev => prev.map(item => item.id === h.id ? { ...item, audio_url: res.data.audio_url } : item));
+    } catch (err) {
+      console.error('Replay failed', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const startNewChat = () => {
@@ -202,9 +219,9 @@ function Dashboard({ token, setToken }) {
                       : 'bg-white text-gray-700 rounded-tl-sm border border-aqua-100'
                   }`}>
                     <p className="text-sm leading-relaxed telugu-font">{formatText(msg.text)}</p>
-                    {msg.audio && (
+                    {msg.role === 'assistant' && (
                       <button
-                        onClick={() => playAudio(msg.audio)}
+                        onClick={() => msg.audio ? playAudio(msg.audio) : handleHistoryReplay({ assistant_text: msg.text, id: 'temp' })}
                         className="mt-1.5 text-xs flex items-center gap-1 opacity-50 hover:opacity-100 transition-opacity"
                       >
                         <Volume2 className="w-3 h-3" /> Replay
@@ -326,20 +343,25 @@ function Dashboard({ token, setToken }) {
                   <p className="text-center text-gray-300 text-sm mt-10">No recent conversations.</p>
                 )}
                 {history.map((h, i) => (
-                  <button
-                    key={i}
-                    onClick={() => loadHistoryItem(h)}
-                    className="w-full text-left bg-aqua-50 hover:bg-aqua-100 border border-aqua-100 p-3 rounded-2xl transition-all active:scale-[0.98] group"
-                  >
-                    <div className="flex justify-between items-start mb-1">
-                      <p className="text-[10px] text-aqua-400 font-medium">
+                  <div key={i} className="group relative">
+                    <button
+                      onClick={() => loadHistoryItem(h)}
+                      className="w-full text-left bg-aqua-50/50 hover:bg-white border border-aqua-100 p-3 rounded-2xl transition-all active:scale-[0.98] shadow-sm hover:shadow-md"
+                    >
+                      <p className="text-[10px] text-aqua-400 font-medium mb-1">
                         {new Date(h.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </p>
-                      {h.audio_url && <Volume2 className="w-3 h-3 text-aqua-300 group-hover:text-aqua-500" />}
-                    </div>
-                    <p className="text-sm font-semibold text-aqua-800 truncate telugu-font">{formatText(h.user_text)}</p>
-                    <p className="text-xs text-gray-400 line-clamp-2 telugu-font mt-0.5">{formatText(h.assistant_text)}</p>
-                  </button>
+                      <p className="text-sm font-semibold text-aqua-800 truncate telugu-font pr-8">{formatText(h.user_text)}</p>
+                      <p className="text-xs text-gray-400 line-clamp-2 telugu-font mt-0.5">{formatText(h.assistant_text)}</p>
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); h.audio_url ? playAudio(`${API_URL}${h.audio_url}`) : handleHistoryReplay(h); }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-white text-aqua-500 rounded-full shadow-sm border border-aqua-100 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-aqua-50"
+                      title="Replay Audio"
+                    >
+                      <Volume2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 ))}
               </div>
             </motion.div>

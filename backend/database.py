@@ -23,6 +23,8 @@ class User(Base):
     
     conversations = relationship("Conversation", back_populates="owner")
 
+from datetime import datetime, timezone
+
 class Conversation(Base):
     __tablename__ = "conversations"
 
@@ -31,7 +33,7 @@ class Conversation(Base):
     user_text = Column(String)
     assistant_text = Column(String)
     audio_url = Column(String, nullable=True)  # New column
-    timestamp = Column(DateTime, default=datetime.datetime.utcnow)
+    timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     owner = relationship("User", back_populates="conversations")
 
