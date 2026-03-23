@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
-import datetime
+from datetime import datetime, timezone
 import os
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///./backend_app.db"

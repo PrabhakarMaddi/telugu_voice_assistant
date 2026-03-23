@@ -349,7 +349,7 @@ function Dashboard({ token, setToken }) {
                       className="w-full text-left bg-aqua-50/50 hover:bg-white border border-aqua-100 p-3 rounded-2xl transition-all active:scale-[0.98] shadow-sm hover:shadow-md"
                     >
                       <p className="text-[10px] text-aqua-400 font-medium mb-1">
-                        {new Date(h.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        {new Date(h.timestamp + (h.timestamp.endsWith('Z') ? '' : 'Z')).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </p>
                       <p className="text-sm font-semibold text-aqua-800 truncate telugu-font pr-8">{formatText(h.user_text)}</p>
                       <p className="text-xs text-gray-400 line-clamp-2 telugu-font mt-0.5">{formatText(h.assistant_text)}</p>
