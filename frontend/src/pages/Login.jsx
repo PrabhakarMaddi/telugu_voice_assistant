@@ -4,7 +4,7 @@ import axios from 'axios';
 import { Mic, Lock, User as UserIcon, ArrowRight, Waves } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const API_URL = 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 function Login({ setToken }) {
   const [username, setUsername] = useState('');
