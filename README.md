@@ -1,45 +1,91 @@
-# Mini Telugu Voice Assistant
+# 🎙️ Mini Telugu Voice Assistant
 
-A conversational AI assistant that understands Telugu speech and responds in Telugu.
+A sophisticated, bilingual AI assistant that seamlessly interacts in Telugu. This project features both a direct **CLI-based Voice Assistant** and a modern **Web-based Dashboard** with persistent chat history.
 
-## Features
-- **Intelligent Voice Input**: Captures audio using `sounddevice` with dynamic silence detection, a grace period to wait for speech, and a minimum recording duration for reliability.
-- **Robust Speech-to-Text**: High-accuracy transcription using Google Web Speech API, with 16-bit PCM audio encoding for maximum compatibility.
-- **Conversational AI**: Context-aware natural language processing via Google Gemini 1.5 Flash. It remembers previous turns for a fluid experience.
-- **Natural Text-to-Speech**: Professional sounding Telugu voices using Microsoft Edge TTS (Shruti Neural).
-- **Auto Audio Playback**: Instant playback of generated responses using Pygame.
+---
 
-## Setup
+## 🚀 Two Ways to Interact
 
-1. **Clone the repository**:
-   ```bash
-   git clone "https://github.com/PrabhakarMaddi/telugu_voice_assistant.git"
-   cd telugu_voice_assistant
-   ```
+### 1. 🖥️ CLI Voice Assistant (`main.py`)
+A fast, lightweight interface for direct voice conversations.
+- **Instant Response**: Captures audio, transcribes, processes via Gemini, and speaks back.
+- **Silence Detection**: Automatically stops recording when you stop speaking.
+- **Minimal Latency**: Optimized for real-time voice feedback.
 
-2. **Install Dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
+### 2. 🌐 Web Assistant Dashboard (FastAPI + React)
+A full-featured web application for managed conversations.
+- **User Authentication**: Secure login and registration.
+- **Voice Selection**: Choose between multiple professional Telugu voices (e.g., Shruti Neural).
+- **Chat History**: Persistent storage of previous conversations using SQLite (SQLAlchemy).
+- **History Replay**: Re-generate and play audio for any past message.
+- **Modern UI**: Sleek, responsive design built with TailwindCSS.
 
-3. **Configure Environment Variables**:
-   - Copy `.env.example` to `.env`.
-   - Add your `GEMINI_API_KEY`.
+---
 
-4. **Run the Assistant**:
-   ```bash
-   python main.py
-   ```
+## 🛠️ Tech Stack
 
-## Folder Structure
-- `src/`: Core Python modules (`recorder.py`, `stt_engine.py`, `llm_engine.py`, etc.).
-- `audio/`: Temporary audio storage for input and output.
-- `main.py`: Main entry point with interactive CLI.
-- `requirements.txt`: Python dependencies.
+| Component | Technology |
+| :--- | :--- |
+| **LLM (Brain)** | Google Gemini 1.5 Flash |
+| **STT (Ear)** | Google Web Speech API (via SpeechRecognition) |
+| **TTS (Voice)** | Microsoft Edge TTS (Shruti Neural) |
+| **Backend** | Python, FastAPI, SQLAlchemy, Uvicorn |
+| **Frontend** | React, Vite, TailwindCSS, Axios |
+| **Database** | SQLite |
+| **Audio** | Pygame (CLI), HTML5 Audio (Web) |
 
-## Technical Details
-- **STT**: Google Web Speech API (via `SpeechRecognition`)
-- **LLM**: Google Gemini 1.5 Flash (`gemini-flash-latest`)
-- **TTS**: Microsoft Edge TTS (`edge-tts`)
-- **Playback**: Pygame
-- **Audio Processing**: 16-bit PCM conversion via `numpy` and `scipy`.
+---
+
+## ⚙️ Setup Instructions
+
+### 1. Prerequisites
+- Python 3.9+
+- Node.js 18+
+- [Google AI (Gemini) API Key](https://aistudio.google.com/)
+
+### 2. General Setup
+```bash
+# Clone the repository
+git clone "https://github.com/PrabhakarMaddi/telugu_voice_assistant.git"
+cd telugu_voice_assistant
+
+# Configure Environment
+cp .env.example .env
+# Edit .env and add your GEMINI_API_KEY
+```
+
+### 3. CLI Assistant Setup
+```bash
+pip install -r requirements.txt
+python main.py
+```
+
+### 4. Web Assistant Setup
+
+**Backend:**
+```bash
+cd backend
+pip install -r ../requirements.txt  # Shared dependencies
+python main.py
+```
+
+**Frontend:**
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+---
+
+## 📁 Project Structure
+- `src/`: Core logic (recorder, STT, LLM, TTS).
+- `backend/`: FastAPI server with auth and history management.
+- `frontend/`: React components and dashboard UI.
+- `audio/`: Local storage for generated voice responses.
+- `main.py`: Entry point for the CLI assistant.
+
+---
+
+## 📝 License
+MIT License. Feel free to use and contribute!
