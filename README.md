@@ -87,5 +87,6 @@ npm run dev
 
 ---
 
-## 📝 License
-MIT License. Feel free to use and contribute!
+## 📝 LicenseCopyright © 2026 Prabhakar Maddi. All rights reserved.
+
+This project is licensed under the MIT License - see the LICENSE file for details. (Note: Licensing is currently assigned specifically for personal use and portfolio representation by Prabhakar Maddi).
