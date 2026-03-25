@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+sqlalchemy
+passlib[bcrypt]
+PyJWT
+pydantic
+python-multipart
+google-generativeai
+SpeechRecognition
+edge-tts
+sounddevice
+numpy
+scipy
+pygame
+python-dotenv
